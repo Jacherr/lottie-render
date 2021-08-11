@@ -34,6 +34,11 @@ async function end(response: ServerResponse, code: StatusCodes, message?: string
 
 let server = createServer(async (connection, response) => {
     let headers = connection.headers;
+
+    if(connection.method == 'GET') {
+        return await end(response, StatusCodes.OK, (process.uptime() * 1000).toString());
+    }
+
     if(headers.authorization !== auth) {
         return await end(response, StatusCodes.UNAUTHORIZED);
     }
