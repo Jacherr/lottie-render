@@ -44,7 +44,7 @@ let server = createServer(async (connection, response) => {
     }
 
     let body = await getBody(connection);
-    let lottie;
+    let lottie: any;
 
     try {
         lottie = JSON.parse(body);
@@ -56,10 +56,23 @@ let server = createServer(async (connection, response) => {
 
     let filename = hash + '.gif';
 
-    await renderLottie({
-        output: filename,
-        animationData: JSON.parse(lottie)
-    });
+    try {
+        await Promise.race([
+            new Promise<void>(async (resolve) => {
+                await renderLottie({
+                    output: filename,
+                    animationData: JSON.parse(lottie)
+                });
+                resolve()
+            }),
+            new Promise((_, reject) => {
+                setTimeout(reject, 10000);
+            })
+        ]);
+    } catch {
+        return await end(response, StatusCodes.BadRequest, 'timed out when rendering sticker');
+    }
+
 
     let gif = readFileSync(filename);
     unlinkSync(filename);
